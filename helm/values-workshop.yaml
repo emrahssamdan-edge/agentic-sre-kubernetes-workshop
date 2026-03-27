@@ -1,0 +1,184 @@
+# Workshop-optimized values for running EasyTrade on minikube
+# These override the default values to reduce resource usage for laptops.
+
+global:
+  image:
+    baseRepository: "europe-docker.pkg.dev/dynatrace-demoability/docker/easytrade"
+    tag: latest
+  labels: {}
+  env: {}
+
+# --- Resource overrides for minikube ---
+# Default values request ~3 CPU and ~7 GB memory total.
+# These reduced values fit comfortably in a minikube cluster with 4 CPU / 8 GB RAM.
+
+accountservice:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 400Mi
+    limits:
+      cpu: 150m
+      memory: 400Mi
+
+aggregator-service:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 30Mi
+    limits:
+      cpu: 100m
+      memory: 30Mi
+
+broker-service:
+  resources:
+    requests:
+      cpu: 50m
+      memory: 300Mi
+    limits:
+      cpu: 300m
+      memory: 300Mi
+
+calculationservice:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 25Mi
+    limits:
+      cpu: 50m
+      memory: 25Mi
+
+contentcreator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 300Mi
+    limits:
+      cpu: 100m
+      memory: 300Mi
+
+credit-card-order-service:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 500Mi
+    limits:
+      cpu: 300m
+      memory: 500Mi
+
+db:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 1Gi
+    limits:
+      cpu: "1"
+      memory: 1.5Gi
+
+engine:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 350Mi
+    limits:
+      cpu: 100m
+      memory: 350Mi
+
+feature-flag-service:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 400Mi
+    limits:
+      cpu: 150m
+      memory: 400Mi
+
+frontend:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 50Mi
+    limits:
+      cpu: 50m
+      memory: 75Mi
+
+frontendreverseproxy:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 75Mi
+    limits:
+      cpu: 100m
+      memory: 100Mi
+
+loadgen:
+  resources:
+    requests:
+      cpu: 200m
+      memory: 200Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+
+loginservice:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 350Mi
+    limits:
+      cpu: 200m
+      memory: 450Mi
+
+manager:
+  resources:
+    requests:
+      cpu: 30m
+      memory: 400Mi
+    limits:
+      cpu: 200m
+      memory: 600Mi
+
+offerservice:
+  resources:
+    requests:
+      cpu: 20m
+      memory: 100Mi
+    limits:
+      cpu: 100m
+      memory: 150Mi
+
+pricing-service:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 60Mi
+    limits:
+      cpu: 100m
+      memory: 80Mi
+
+problem-operator:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 15Mi
+    limits:
+      cpu: 50m
+      memory: 15Mi
+
+rabbitmq:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 150Mi
+    limits:
+      cpu: 100m
+      memory: 175Mi
+
+third-party-service:
+  resources:
+    requests:
+      cpu: 10m
+      memory: 350Mi
+    limits:
+      cpu: 100m
+      memory: 450Mi

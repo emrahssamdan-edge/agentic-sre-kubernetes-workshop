@@ -1,0 +1,17 @@
+# Helm
+helm/easytrade/charts/app/charts/
+*.tgz
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Kubernetes
+kubeconfig
+*.kubeconfig
