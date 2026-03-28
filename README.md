@@ -75,10 +75,12 @@ kill %1
 kubectl rollout restart deployment -n easytrade
 
 # 6. Install Edge Delta agent (replace with your API key)
-helm repo add edgedelta https://edgedelta.github.io/charts
-helm install edgedelta edgedelta/edgedelta \
-  -n edgedelta --create-namespace \
-  --set secretApiKey.value=YOUR_ED_API_KEY
+helm repo add edgedelta https://helm.edgedelta.com && helm repo update
+helm upgrade edgedelta edgedelta/edgedelta -i \
+  --version 2.13.0 --reuse-values \
+  --set watcherProps.enabled=false \
+  --set secretApiKey.value=YOUR_ED_API_KEY \
+  -n edgedelta --create-namespace
 
 # 7. Trigger a failure
 helm upgrade easytrade helm/easytrade -f helm/values-workshop.yaml \

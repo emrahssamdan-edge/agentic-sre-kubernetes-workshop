@@ -134,16 +134,17 @@ Open [http://localhost:9090](http://localhost:9090) in your browser. You should 
 
 ### Install the agent
 
+Copy the install command from the Edge Delta UI, or use this (replace `YOUR_ED_API_KEY` with your key):
+
 ```bash
-helm repo add edgedelta https://edgedelta.github.io/charts
-helm repo update
-
-helm install edgedelta edgedelta/edgedelta \
-  -n edgedelta --create-namespace \
-  --set secretApiKey.value=YOUR_ED_API_KEY
+helm repo add edgedelta https://helm.edgedelta.com && \
+helm repo update && \
+helm upgrade edgedelta edgedelta/edgedelta -i \
+  --version 2.13.0 --reuse-values \
+  --set watcherProps.enabled=false \
+  --set secretApiKey.value=YOUR_ED_API_KEY \
+  -n edgedelta --create-namespace
 ```
-
-Replace `YOUR_ED_API_KEY` with the API key you copied from Edge Delta.
 
 Verify the agent is running:
 
