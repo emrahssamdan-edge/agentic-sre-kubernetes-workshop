@@ -9,20 +9,32 @@ Step-by-step instructions for the workshop. Follow along at your own pace.
 Make sure all tools are installed:
 
 ```bash
-docker --version
+docker --version    # or colima version (see Apple Silicon note below)
 minikube version
 kubectl version --client
 helm version
 git version
 ```
 
-Start minikube with enough resources for 19 microservices:
+### Apple Silicon Macs (M1/M2/M3/M4)
+
+The EasyTrade container images are built for x86_64 (amd64). On Apple Silicon Macs, you need a container runtime that supports x86 emulation. **Docker Desktop** works but may show macOS security warnings. **Colima** is a lightweight alternative:
 
 ```bash
-minikube start --cpus=4 --memory=8192
+# Install colima and Docker CLI
+brew install colima docker lima-additional-guestagents
+
+# Start colima (native arm64 VM with x86 emulation support)
+colima start --cpu 4 --memory 8 --disk 30
 ```
 
-> **Tip:** If your machine has more resources, feel free to increase these values. The application benefits from extra CPU.
+> **Note:** Java services start slower under emulation. The first load of the app may take 2-3 minutes. This is expected.
+
+### Start minikube
+
+```bash
+minikube start --driver=docker --cpus=3 --memory=7600
+```
 
 Verify the cluster is running:
 
@@ -54,17 +66,58 @@ Watch pods come up:
 kubectl get pods -n easytrade -w
 ```
 
-Wait until all pods show `Running` status. This typically takes 2-3 minutes. The `db` pod may take the longest since it initializes the SQL Server database.
+Wait until all pods show `Running` status. This typically takes 3-5 minutes (longer on Apple Silicon due to x86 emulation). The `db` pod initializes first, then `contentcreator` populates the database, and other services follow.
 
 > **Troubleshooting:** If pods are stuck in `Pending`, check if minikube has enough resources: `kubectl describe pod <pod-name> -n easytrade`
 
-Once all pods are running, verify the application is accessible:
+### Create the application database
+
+The database starts empty and needs the `TradeManagement` database created. Install `sqlcmd` and create it:
 
 ```bash
-kubectl port-forward -n easytrade svc/easytrade-frontendreverseproxy 8080:8080
+# Install sqlcmd (if not already installed)
+brew install pymssql  # or: pip3 install pymssql
+
+# Port-forward to the database
+kubectl port-forward -n easytrade svc/easytrade-db 1433:1433 &
+
+# Create the database using Python
+python3 -c "
+import pymssql
+conn = pymssql.connect(server='localhost', user='sa', password='StrongPass1234', port=1433)
+conn.autocommit(True)
+cursor = conn.cursor()
+cursor.execute('CREATE DATABASE TradeManagement')
+print('Database created successfully')
+conn.close()
+"
+
+# Stop the port-forward
+kill %1
 ```
 
-Open [http://localhost:8080](http://localhost:8080) in your browser. You should see the EasyTrade trading platform. Login with `demouser` / `demopass`.
+After creating the database, restart the services that depend on it:
+
+```bash
+kubectl rollout restart deployment/easytrade-contentcreator \
+  deployment/easytrade-accountservice \
+  deployment/easytrade-loginservice \
+  deployment/easytrade-pricing-service \
+  deployment/easytrade-loadgen \
+  -n easytrade
+```
+
+### Verify the application
+
+Once all pods are running, access the application:
+
+```bash
+kubectl port-forward -n easytrade svc/easytrade-frontendreverseproxy 9090:8080
+```
+
+Open [http://localhost:9090](http://localhost:9090) in your browser. You should see the EasyTrade trading platform. Login with `demouser` / `demopass`.
+
+> **Apple Silicon note:** The first page load may take 15-30 seconds as the Java backend services are slow under emulation. Be patient.
 
 > Press `Ctrl+C` to stop port-forwarding when done. The app continues running in the cluster.
 
@@ -192,6 +245,9 @@ helm uninstall easytrade -n easytrade
 kubectl delete namespace easytrade edgedelta
 minikube stop
 minikube delete
+
+# If using colima:
+colima stop
 ```
 
 ---
@@ -222,13 +278,21 @@ See [Failure Scenarios](failure-scenarios.md) for details on each pattern.
 kubectl describe pod <pod-name> -n easytrade
 # Usually means minikube needs more CPU/memory
 minikube stop
-minikube start --cpus=4 --memory=8192
+minikube start --driver=docker --cpus=3 --memory=7600
 ```
 
 **Pods in CrashLoopBackOff:**
 ```bash
 kubectl logs <pod-name> -n easytrade
-# The db pod may take longer to start. Other services retry connections automatically.
+# The db pod starts first. Other services retry connections automatically.
+# contentcreator may restart several times while waiting for the database.
+```
+
+**Pods OOMKilled:**
+The workshop values are tuned for emulated workloads. If you see OOMKilled pods, increase the memory limit:
+```bash
+helm upgrade easytrade helm/easytrade -f helm/values-workshop.yaml \
+  -n easytrade --set <service>.resources.limits.memory=512Mi
 ```
 
 **Edge Delta not showing logs:**
@@ -238,4 +302,7 @@ kubectl logs -n edgedelta -l app=edgedelta
 ```
 
 **Can't pull images:**
-The images come from a public registry (`europe-docker.pkg.dev/dynatrace-demoability/docker/easytrade`). If you're behind a corporate firewall, you may need to configure proxy settings in Docker Desktop.
+The images come from a public registry (`europe-docker.pkg.dev/dynatrace-demoability/docker/easytrade`). If you're behind a corporate firewall, you may need to configure proxy settings in Docker Desktop or colima.
+
+**Docker Desktop "Malware Blocked" on macOS:**
+This is a known false positive with `com.docker.vmnetd`. Either allow it in System Settings > Privacy & Security, or use **colima** instead (see Step 1).

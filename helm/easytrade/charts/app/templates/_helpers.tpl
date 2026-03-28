@@ -37,7 +37,6 @@ Common labels
 helm.sh/chart: {{ include "app.chart" . }}
 {{ include "app.selectorLabels" . }}
 app.kubernetes.io/version: {{ .Values.global.image.tag | quote }}
-app.kubernetes.io/dt-version: {{ .Values.global.dynatrace.version | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
 app.kubernetes.io/part-of: easytrade
 {{- with .Values.global.labels }}

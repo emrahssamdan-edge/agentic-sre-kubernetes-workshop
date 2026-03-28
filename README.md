@@ -17,11 +17,14 @@ A hands-on workshop where you deploy a 19-microservice trading platform on minik
 
 | Tool | Install |
 |------|---------|
-| Docker Desktop | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) |
+| Docker Desktop or colima | [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) or `brew install colima docker` |
 | minikube | `brew install minikube` or [minikube.sigs.k8s.io/docs/start](https://minikube.sigs.k8s.io/docs/start/) |
 | kubectl | `brew install kubectl` or installed with Docker Desktop |
 | Helm | `brew install helm` or [helm.sh/docs/intro/install](https://helm.sh/docs/intro/install/) |
 | Git | `brew install git` or [git-scm.com](https://git-scm.com/) |
+| Python 3 + pymssql | `pip3 install pymssql` (for database setup) |
+
+> **Apple Silicon Macs (M1/M2/M3/M4):** The app images are x86_64. We recommend **colima** as the container runtime - it handles cross-architecture emulation well. See the [Workshop Guide](docs/workshop-guide.md) for details.
 
 No prior experience with AI-driven or agentic systems is required.
 
@@ -46,23 +49,38 @@ Detailed instructions for each step are in the [Workshop Guide](docs/workshop-gu
 git clone https://github.com/emrahssamdan-edge/agentic-sre-kubernetes-workshop.git
 cd agentic-sre-kubernetes-workshop
 
-# 2. Start minikube
-minikube start --cpus=4 --memory=8192
+# 2. Start container runtime and minikube
+# If using colima (recommended for Apple Silicon):
+colima start --cpu 4 --memory 8 --disk 30
+minikube start --driver=docker --cpus=3 --memory=7600
 
 # 3. Deploy the application
 helm dependency build helm/easytrade
 helm install easytrade helm/easytrade -f helm/values-workshop.yaml -n easytrade --create-namespace
 
-# 4. Wait for pods to be ready (takes 2-3 minutes)
+# 4. Wait for pods to be ready (takes 3-5 minutes)
 kubectl get pods -n easytrade -w
 
-# 5. Install Edge Delta agent (replace with your API key)
+# 5. Create the application database (one-time setup)
+kubectl port-forward -n easytrade svc/easytrade-db 1433:1433 &
+python3 -c "
+import pymssql
+conn = pymssql.connect(server='localhost', user='sa', password='StrongPass1234', port=1433)
+conn.autocommit(True)
+conn.cursor().execute('CREATE DATABASE TradeManagement')
+print('Database created')
+conn.close()
+"
+kill %1
+kubectl rollout restart deployment -n easytrade
+
+# 6. Install Edge Delta agent (replace with your API key)
 helm repo add edgedelta https://edgedelta.github.io/charts
 helm install edgedelta edgedelta/edgedelta \
   -n edgedelta --create-namespace \
   --set secretApiKey.value=YOUR_ED_API_KEY
 
-# 6. Trigger a failure
+# 7. Trigger a failure
 helm upgrade easytrade helm/easytrade -f helm/values-workshop.yaml \
   -n easytrade \
   --set feature-flag-service.problemPatterns.dbNotResponding=true

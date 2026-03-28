@@ -67,6 +67,12 @@ credit-card-order-service:
       memory: 500Mi
 
 db:
+  image:
+    repository: mcr.microsoft.com/azure-sql-edge
+    tag: latest
+  env:
+    ACCEPT_EULA: "Y"
+    MSSQL_SA_PASSWORD: "StrongPass1234"
   resources:
     requests:
       cpu: 200m
@@ -115,10 +121,10 @@ loadgen:
   resources:
     requests:
       cpu: 200m
-      memory: 200Mi
+      memory: 512Mi
     limits:
       cpu: "1"
-      memory: 1Gi
+      memory: 2Gi
 
 loginservice:
   resources:
@@ -142,10 +148,10 @@ offerservice:
   resources:
     requests:
       cpu: 20m
-      memory: 100Mi
+      memory: 200Mi
     limits:
       cpu: 100m
-      memory: 150Mi
+      memory: 300Mi
 
 pricing-service:
   resources:
@@ -160,19 +166,19 @@ problem-operator:
   resources:
     requests:
       cpu: 10m
-      memory: 15Mi
+      memory: 30Mi
     limits:
       cpu: 50m
-      memory: 15Mi
+      memory: 50Mi
 
 rabbitmq:
   resources:
     requests:
       cpu: 10m
-      memory: 150Mi
+      memory: 200Mi
     limits:
       cpu: 100m
-      memory: 175Mi
+      memory: 300Mi
 
 third-party-service:
   resources:
