@@ -103,7 +103,6 @@ kubectl rollout restart deployment/easytrade-contentcreator \
   deployment/easytrade-accountservice \
   deployment/easytrade-loginservice \
   deployment/easytrade-pricing-service \
-  deployment/easytrade-loadgen \
   -n easytrade
 ```
 
@@ -160,7 +159,7 @@ You should see the Edge Delta agent pod(s) in `Running` status.
 
 Go back to [app.edgedelta.com](https://app.edgedelta.com). Within a minute or two, you should start seeing:
 
-- **Logs** flowing in from all 19 EasyTrade services
+- **Logs** flowing in from all EasyTrade services
 - **Kubernetes metadata** attached to each log line (pod name, namespace, labels)
 - A healthy baseline with normal application behavior
 
@@ -168,6 +167,22 @@ Take a minute to explore the Edge Delta UI:
 - Browse logs from different services
 - Notice the automatic pattern detection and grouping
 - This is the "normal" state - remember what it looks like
+
+### Start the traffic generator
+
+The built-in load generator is disabled in this workshop (it requires a headless browser that doesn't work reliably under x86 emulation on Apple Silicon). Instead, we use a lightweight traffic script that curls the key API endpoints.
+
+Open a **new terminal** and run:
+
+```bash
+# Port-forward the reverse proxy (if not already running)
+kubectl port-forward -n easytrade svc/easytrade-frontendreverseproxy 9090:8080 &
+
+# Start sending traffic
+./scripts/generate-traffic.sh
+```
+
+You should see color-coded output showing HTTP status codes for each endpoint. Green (2xx) means healthy, red (4xx/5xx) means errors. Leave this running in the background for the rest of the workshop.
 
 ---
 
@@ -186,7 +201,7 @@ This simulates the database becoming unresponsive. The feature-flag-service rest
 ### What happens
 
 - The `accountservice`, `loginservice`, and `offerservice` start throwing database connection errors
-- The load generator continues making requests, so error volume is significant
+- The traffic script continues making requests, so error volume is significant
 - Log patterns change dramatically from the healthy baseline
 
 ### What to observe in Edge Delta

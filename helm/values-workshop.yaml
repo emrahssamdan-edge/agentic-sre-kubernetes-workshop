@@ -118,13 +118,10 @@ frontendreverseproxy:
       memory: 100Mi
 
 loadgen:
-  resources:
-    requests:
-      cpu: 200m
-      memory: 512Mi
-    limits:
-      cpu: "1"
-      memory: 2Gi
+  enabled: false
+  # Disabled: we use scripts/generate-traffic.sh instead.
+  # The built-in loadgen requires a headless browser that may not
+  # work under x86 emulation on Apple Silicon Macs.
 
 loginservice:
   resources:

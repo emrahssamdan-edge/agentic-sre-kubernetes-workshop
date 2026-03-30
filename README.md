@@ -82,7 +82,11 @@ helm upgrade edgedelta edgedelta/edgedelta -i \
   --set secretApiKey.value=YOUR_ED_API_KEY \
   -n edgedelta --create-namespace
 
-# 7. Trigger a failure
+# 7. Start traffic generation
+kubectl port-forward -n easytrade svc/easytrade-frontendreverseproxy 9090:8080 &
+./scripts/generate-traffic.sh  # leave running in a separate terminal
+
+# 8. Trigger a failure
 helm upgrade easytrade helm/easytrade -f helm/values-workshop.yaml \
   -n easytrade \
   --set feature-flag-service.problemPatterns.dbNotResponding=true
@@ -90,7 +94,7 @@ helm upgrade easytrade helm/easytrade -f helm/values-workshop.yaml \
 
 ## Application Architecture
 
-EasyTrade is a multi-service trading platform with 19 microservices including a frontend, backend APIs, database, message queue, and a built-in load generator. It produces realistic telemetry - logs, metrics, and traces.
+EasyTrade is a multi-service trading platform with 19 microservices including a frontend, backend APIs, database, and message queue. It produces realistic telemetry - logs, metrics, and traces. A traffic generation script (`scripts/generate-traffic.sh`) sends requests to key API endpoints to simulate user activity.
 
 For details, see [Architecture](docs/architecture.md).
 
